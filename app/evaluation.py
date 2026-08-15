@@ -56,6 +56,49 @@ TEST_SET = [
     }
 ]
 
+# Questions the docs CANNOT answer — system should abstain
+ADVERSARIAL_SET = [
+    {
+        "question": "What is the maximum bandwidth supported by WiFi 7?",
+        "expected_behavior": "abstain",
+        "reason": "WiFi is not covered in 3GPP specifications"
+    },
+    {
+        "question": "Compare Mavenir's vRAN solution with Nokia's Cloud RAN.",
+        "expected_behavior": "abstain",
+        "reason": "Vendor-specific products not in 3GPP specs"
+    },
+    {
+        "question": "What changes were introduced in 3GPP Release 25?",
+        "expected_behavior": "abstain",
+        "reason": "Release 25 does not exist yet"
+    },
+    {
+        "question": "What is the stock price of Qualcomm?",
+        "expected_behavior": "abstain",
+        "reason": "Financial data not in 3GPP specs"
+    },
+    {
+        "question": "How does TCP three-way handshake work?",
+        "expected_behavior": "abstain",
+        "reason": "General networking, not 3GPP-specific"
+    },
+    {
+        "question": "What LLM model does Mavenir use in MavAI OPS?",
+        "expected_behavior": "abstain",
+        "reason": "Mavenir product details not in 3GPP specs"
+    },
+    {
+        "question": "Should I invest in 5G infrastructure stocks?",
+        "expected_behavior": "abstain",
+        "reason": "Financial advice not in 3GPP specs"
+    },
+    {
+        "question": "Write Python code to parse a 3GPP specification document.",
+        "expected_behavior": "abstain",
+        "reason": "Code generation request, not a knowledge query"
+    }
+]
 
 def evaluate_response(result: dict, test_case: dict) -> dict:
     """
@@ -155,6 +198,65 @@ def run_evaluation():
     print(f"\nResults saved to eval/eval_results.json")
     return output
 
+def run_adversarial_evaluation():
+    """
+    Test with questions the docs CANNOT answer.
+    The system should abstain (say "I don't have enough information").
+    A system that answers these confidently is hallucinating.
+    """
+    print("\n" + "=" * 70)
+    print("ADVERSARIAL EVALUATION: Unanswerable Questions")
+    print("=" * 70)
+    
+    results = []
+    
+    for i, test_case in enumerate(ADVERSARIAL_SET, 1):
+        print(f"\n[{i}/{len(ADVERSARIAL_SET)}] {test_case['question']}")
+        
+        result = generate(test_case["question"])
+        
+        # Did the system correctly abstain?
+        abstained = result["confidence"] == "NOT_GROUNDED"
+        
+        results.append({
+            "question": test_case["question"],
+            "expected": "abstain",
+            "actual": "abstained" if abstained else "answered (hallucination risk)",
+            "correct": abstained,
+            "confidence": result["confidence"],
+            "reason": test_case["reason"]
+        })
+        
+        status = "✓ Correctly abstained" if abstained else "✗ Answered (should have abstained)"
+        print(f"  {status}")
+    
+    # Aggregate
+    total = len(results)
+    correct = sum(1 for r in results if r["correct"])
+    abstention_accuracy = correct / total
+    
+    print(f"\n{'=' * 70}")
+    print(f"ADVERSARIAL RESULTS")
+    print(f"{'=' * 70}")
+    print(f"  Abstention Accuracy: {abstention_accuracy:.0%}")
+    print(f"  Correctly Abstained: {correct}/{total}")
+    print(f"  False Answers:       {total - correct}/{total}")
+    
+    # Save
+    output = {
+        "abstention_accuracy": round(abstention_accuracy, 3),
+        "correctly_abstained": correct,
+        "false_answers": total - correct,
+        "total": total,
+        "individual": results
+    }
+    
+    with open("eval/adversarial_results.json", "w") as f:
+        json.dump(output, f, indent=2)
+    
+    print(f"\nResults saved to eval/adversarial_results.json")
+    return output
 
 if __name__ == "__main__":
     run_evaluation()
+    run_adversarial_evaluation()
