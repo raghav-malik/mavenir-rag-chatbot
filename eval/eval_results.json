@@ -1,8 +1,8 @@
 {
   "aggregate": {
-    "avg_keyword_coverage": 0.66,
+    "avg_keyword_coverage": 0.68,
     "source_accuracy": 1.0,
-    "grounding_rate": 1.0,
+    "grounding_rate": 0.8,
     "answer_rate": 1.0,
     "total_questions": 10
   },
@@ -18,19 +18,19 @@
       "question": "What is the purpose of the AMF in 5G?",
       "keyword_coverage": 0.8,
       "source_accuracy": true,
-      "is_grounded": true,
+      "is_grounded": false,
       "answered": true
     },
     {
       "question": "What is a PDU session?",
-      "keyword_coverage": 0.4,
+      "keyword_coverage": 0.6,
       "source_accuracy": true,
       "is_grounded": true,
       "answered": true
     },
     {
       "question": "What is the role of the SMF?",
-      "keyword_coverage": 0.8,
+      "keyword_coverage": 0.6,
       "source_accuracy": true,
       "is_grounded": true,
       "answered": true
@@ -46,19 +46,19 @@
       "question": "What are the main components of 5G system architecture?",
       "keyword_coverage": 0.2,
       "source_accuracy": true,
-      "is_grounded": true,
+      "is_grounded": false,
       "answered": true
     },
     {
       "question": "How does handover work in NR?",
-      "keyword_coverage": 1.0,
+      "keyword_coverage": 0.8,
       "source_accuracy": true,
       "is_grounded": true,
       "answered": true
     },
     {
       "question": "What is the NG-RAN architecture?",
-      "keyword_coverage": 0.4,
+      "keyword_coverage": 0.6,
       "source_accuracy": true,
       "is_grounded": true,
       "answered": true
@@ -72,7 +72,7 @@
     },
     {
       "question": "What is the purpose of NSSF in 5G?",
-      "keyword_coverage": 0.8,
+      "keyword_coverage": 1.0,
       "source_accuracy": true,
       "is_grounded": true,
       "answered": true

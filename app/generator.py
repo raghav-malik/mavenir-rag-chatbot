@@ -1,5 +1,6 @@
 from app.retriever import retrieve
 from app.llm_adapter import call_llm
+from app.faithfulness import verify_faithfulness
 
 
 SYSTEM_PROMPT = """You are a 3GPP telecommunications standards expert assistant.
@@ -65,12 +66,13 @@ def classify_confidence(response: str, chunks: list[dict]) -> str:
 
 def generate(query: str, provider: str = None) -> dict: # type: ignore
     """
-    Full RAG generation pipeline:
+    Full RAG generation pipeline with faithfulness verification:
     1. Retrieve top 5 relevant chunks
     2. Build grounded prompt with context
     3. Call LLM with strict grounding instructions
     4. Classify confidence level
-    5. Return answer with sources and confidence
+    5. Verify faithfulness of claims against context
+    6. Return answer with sources, confidence, and faithfulness
     """
     # Step 1: Retrieve relevant chunks
     chunks = retrieve(query)
@@ -88,7 +90,16 @@ def generate(query: str, provider: str = None) -> dict: # type: ignore
     # Step 4: Classify confidence
     confidence = classify_confidence(response, chunks)
     
-    # Step 5: Package the result
+    # Step 5: Verify faithfulness (only if the system answered)
+    faithfulness_result = None
+    if confidence != "NOT_GROUNDED":
+        faithfulness_result = verify_faithfulness(response, chunks, provider)
+        
+        # If faithfulness check finds unsupported claims, downgrade confidence
+        if faithfulness_result and not faithfulness_result["is_faithful"]:
+            confidence = "PARTIALLY_GROUNDED"
+    
+    # Step 6: Package the result
     sources = [
         {
             "source": chunk["metadata"]["source"],
@@ -99,10 +110,15 @@ def generate(query: str, provider: str = None) -> dict: # type: ignore
         for chunk in chunks
     ]
     
-    return {
+    result = {
         "query": query,
         "answer": response,
         "confidence": confidence,
         "sources": sources,
         "model_provider": provider or "default"
     }
+    
+    if faithfulness_result:
+        result["faithfulness"] = faithfulness_result
+    
+    return result

@@ -1,0 +1,72 @@
+{
+  "abstention_accuracy": 1.0,
+  "correctly_abstained": 8,
+  "false_answers": 0,
+  "total": 8,
+  "individual": [
+    {
+      "question": "What is the maximum bandwidth supported by WiFi 7?",
+      "expected": "abstain",
+      "actual": "abstained",
+      "correct": true,
+      "confidence": "NOT_GROUNDED",
+      "reason": "WiFi is not covered in 3GPP specifications"
+    },
+    {
+      "question": "Compare Mavenir's vRAN solution with Nokia's Cloud RAN.",
+      "expected": "abstain",
+      "actual": "abstained",
+      "correct": true,
+      "confidence": "NOT_GROUNDED",
+      "reason": "Vendor-specific products not in 3GPP specs"
+    },
+    {
+      "question": "What changes were introduced in 3GPP Release 25?",
+      "expected": "abstain",
+      "actual": "abstained",
+      "correct": true,
+      "confidence": "NOT_GROUNDED",
+      "reason": "Release 25 does not exist yet"
+    },
+    {
+      "question": "What is the stock price of Qualcomm?",
+      "expected": "abstain",
+      "actual": "abstained",
+      "correct": true,
+      "confidence": "NOT_GROUNDED",
+      "reason": "Financial data not in 3GPP specs"
+    },
+    {
+      "question": "How does TCP three-way handshake work?",
+      "expected": "abstain",
+      "actual": "abstained",
+      "correct": true,
+      "confidence": "NOT_GROUNDED",
+      "reason": "General networking, not 3GPP-specific"
+    },
+    {
+      "question": "What LLM model does Mavenir use in MavAI OPS?",
+      "expected": "abstain",
+      "actual": "abstained",
+      "correct": true,
+      "confidence": "NOT_GROUNDED",
+      "reason": "Mavenir product details not in 3GPP specs"
+    },
+    {
+      "question": "Should I invest in 5G infrastructure stocks?",
+      "expected": "abstain",
+      "actual": "abstained",
+      "correct": true,
+      "confidence": "NOT_GROUNDED",
+      "reason": "Financial advice not in 3GPP specs"
+    },
+    {
+      "question": "Write Python code to parse a 3GPP specification document.",
+      "expected": "abstain",
+      "actual": "abstained",
+      "correct": true,
+      "confidence": "NOT_GROUNDED",
+      "reason": "Code generation request, not a knowledge query"
+    }
+  ]
+}
