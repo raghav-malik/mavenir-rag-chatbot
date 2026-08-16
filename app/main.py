@@ -4,6 +4,7 @@ from app.generator import generate
 from app.ingest import ingest
 import os
 from app.config import DATA_DIR
+from typing import Literal, Optional
 
 app = FastAPI(
     title="3GPP RAG Chatbot",
@@ -14,7 +15,7 @@ app = FastAPI(
 
 class QuestionRequest(BaseModel):
     question: str
-    provider: str = None  # type: ignore # "openai" or "anthropic", defaults to config
+    provider: Optional[Literal["openai", "anthropic"]] = None  # type: ignore
 
 
 class AnswerResponse(BaseModel):
@@ -23,7 +24,7 @@ class AnswerResponse(BaseModel):
     confidence: str
     sources: list
     model_provider: str
-
+    faithfulness: dict = None # type: ignore
 
 @app.get("/")
 def root():
@@ -53,14 +54,16 @@ def ask_question(request: QuestionRequest):
     if not request.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty")
     
-    result = generate(request.question, provider=request.provider)
+    if len(request.question) > 1000:
+        raise HTTPException(status_code=400, detail="Question too long (max 1000 characters)")
+    
+    result = generate(request.question, provider=request.provider) # type: ignore
     return result
 
 
 @app.post("/ingest")
 def ingest_documents():
-    """
-    Ingest all documents from the data directory.
+    """Ingest all documents from the data directory.
     
     Loads PDFs and DOCX files, chunks them, generates embeddings
     using the OTel telecom model, and stores in ChromaDB.
@@ -71,6 +74,11 @@ def ingest_documents():
         raise HTTPException(status_code=404, detail="No documents found in data directory")
     
     ingest()
+    
+    # Reset the retriever so it rebuilds BM25 index with new data
+    import app.retriever as retriever_module
+    retriever_module._retriever = None
+    
     return {
         "status": "success",
         "message": f"Ingested {len(files)} documents",
