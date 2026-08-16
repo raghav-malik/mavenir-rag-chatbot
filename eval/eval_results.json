@@ -1,8 +1,8 @@
 {
   "aggregate": {
-    "avg_keyword_coverage": 0.74,
+    "avg_keyword_coverage": 0.82,
     "source_accuracy": 1.0,
-    "grounding_rate": 0.8,
+    "grounding_rate": 0.9,
     "answer_rate": 1.0,
     "total_questions": 10
   },
@@ -11,19 +11,19 @@
       "question": "What is network slicing in 5G?",
       "keyword_coverage": 0.8,
       "source_accuracy": true,
-      "is_grounded": false,
-      "answered": true
-    },
-    {
-      "question": "What is the purpose of the AMF in 5G?",
-      "keyword_coverage": 0.6,
-      "source_accuracy": true,
       "is_grounded": true,
       "answered": true
     },
     {
+      "question": "What is the purpose of the AMF in 5G?",
+      "keyword_coverage": 0.8,
+      "source_accuracy": true,
+      "is_grounded": false,
+      "answered": true
+    },
+    {
       "question": "What is a PDU session?",
-      "keyword_coverage": 0.6,
+      "keyword_coverage": 0.8,
       "source_accuracy": true,
       "is_grounded": true,
       "answered": true
@@ -44,16 +44,16 @@
     },
     {
       "question": "What are the main components of 5G system architecture?",
-      "keyword_coverage": 0.2,
+      "keyword_coverage": 0.4,
       "source_accuracy": true,
       "is_grounded": true,
       "answered": true
     },
     {
       "question": "How does handover work in NR?",
-      "keyword_coverage": 0.8,
+      "keyword_coverage": 1.0,
       "source_accuracy": true,
-      "is_grounded": false,
+      "is_grounded": true,
       "answered": true
     },
     {
