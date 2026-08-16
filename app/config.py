@@ -18,10 +18,10 @@ EMBEDDING_DIMENSION = 384
 RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L6-v2"
 
 # --- Chunking ---
-# 512 tokens balances context retention vs noise for technical docs
-# 50-token overlap prevents information loss at chunk boundaries
-CHUNK_SIZE = 512
-CHUNK_OVERLAP = 50
+# 800 characters (~160-200 tokens) stays within OTel-Embedding-34M's 256-token max sequence length
+# 80-character overlap prevents information loss at chunk boundaries
+CHUNK_SIZE = 800
+CHUNK_OVERLAP = 80
 
 # --- Retrieval ---
 # Retrieve 20 candidates via hybrid search, rerank to top 5
@@ -32,6 +32,7 @@ RERANK_TOP_K = 5
 DEFAULT_LLM_PROVIDER = "openai"  # "openai" or "anthropic"
 OPENAI_MODEL = "gpt-4o-mini"
 ANTHROPIC_MODEL = "claude-sonnet-4-20250514"
+FAITHFULNESS_MODEL = "claude-haiku-4-5-20251001"
 
 # --- ChromaDB ---
 CHROMA_PERSIST_DIR = "./chroma_db"

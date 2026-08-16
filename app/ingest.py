@@ -35,9 +35,9 @@ def chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVE
     """
     Split text into chunks of roughly chunk_size characters with overlap.
     
-    Why these defaults:
-    - 512 chars balances context retention vs noise for technical docs
-    - 50 char overlap prevents information loss at chunk boundaries
+    800 chars (~200 tokens) stays within OTel-Embedding-34M's 1500-token limit.
+    Telco-RAG/Telco-oRAG research shows smaller focused chunks outperform larger ones.
+    80 char overlap prevents information loss at chunk boundaries.
     """
     chunks = []
     start = 0
@@ -75,7 +75,7 @@ def load_all_documents(data_dir: str = DATA_DIR) -> list[dict]:
             
             print(f"  → {len(chunks)} chunks created from {filename}")
     
-    print(f"\nTotal: {len(all_chunks)} chunks from {len(os.listdir(data_dir))} files")
+    print(f"\nTotal: {len(all_chunks)} chunks from {len([f for f in os.listdir(data_dir) if f.endswith(('.docx', '.pdf'))])} files")
     return all_chunks
 
 
