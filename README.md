@@ -86,8 +86,8 @@ User Question
 |---|---|---|
 | Source Accuracy | **100%** | Retrieval always found the correct specification |
 | Answer Rate | **100%** | System answered every answerable question |
-| Grounding Rate | **80-90%** | Answers included source citations |
-| Keyword Coverage | **74-76%** | Lexical overlap with expected terms |
+| Grounding Rate | **90%** | Answers included source citations |
+| Keyword Coverage | **82%** | Lexical overlap with expected terms |
 | Faithfulness | **1.0** | All verified claims supported by retrieved context |
 
 ### Adversarial Questions (8 unanswerable queries)
@@ -106,12 +106,23 @@ Tested five chunking configurations to find the optimal setting. OTel-Embedding-
 | Setting | Chunks | Source Acc | Grounding | Abstention | Keyword | Answer Rate |
 |---|---|---|---|---|---|---|
 | 512 chars, boundary | 12,505 | 100% | 80% | 100% | 68% | 100% |
-| **800 chars, boundary** | **8,024** | **100%** | **80-90%** | **100%** | **74-76%** | **100%** |
+| **800 chars, boundary** | **8,024** | **100%** | **90%** | **100%** | **82%** | **100%** |
 | 1200 chars, boundary | 5,350 | 100% | 70% | 100% | 76% | 100% |
 | 1500 chars, boundary | 4,280 | 100% | 70% | 100% | 56% | 90% |
 | 800 chars, clause-aware | 9,054 | 100% | 80% | 100% | 68% | 100% |
 
 **Finding:** 800-character boundary chunking was optimal. Smaller chunks (512) lost context, larger chunks (1200/1500) reduced grounding rate and keyword coverage. At 1500 characters, the system even failed to answer one answerable question. Clause-aware chunking (parsing DOCX heading structure) did not outperform boundary chunking — the cross-encoder reranker compensates for imperfect boundaries by reading query and chunk together.
+
+### Model Comparison
+
+Tested two LLM providers with identical retrieval pipeline to evaluate model impact on generation quality.
+
+| Model | Keyword | Source Acc | Grounding | Abstention | Answer Rate |
+|---|---|---|---|---|---|
+| GPT-4.1-mini | 88% | 100% | 90% | 100% | 100% |
+| Claude Sonnet 4.5 | 86% | 100% | 80% | 100% | 90% |
+
+**Finding:** GPT-4.1-mini scored highest across all metrics. Claude Sonnet 4.5 was more cautious — it abstained on one answerable question (false negative), resulting in lower answer rate. Both achieved 100% abstention accuracy on adversarial queries.
 
 ### Retrieval Ablation: Dense-Only vs Hybrid
 
