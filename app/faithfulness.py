@@ -1,6 +1,7 @@
 import json
 import re
 from app.llm_adapter import call_llm
+from app.config import FAITHFULNESS_MODEL
 
 
 FAITHFULNESS_PROMPT = """You are a strict fact checker. Your job is to verify whether 
@@ -67,7 +68,7 @@ def verify_faithfulness(answer: str, chunks: list[dict], provider: str = None) -
     raw_response = call_llm(
         "You are a JSON-only fact checker. Return only valid JSON.", 
         prompt, 
-        **kwargs
+        provider=provider or "anthropic"
     )
     
     data = extract_json(raw_response)

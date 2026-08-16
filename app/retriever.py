@@ -147,7 +147,10 @@ _retriever = None
 def get_retriever() -> HybridRetriever:
     global _retriever
     if _retriever is None:
-        _retriever = HybridRetriever()
+        try:
+            _retriever = HybridRetriever()
+        except Exception as e:
+            raise RuntimeError("No documents ingested. Run 'python -m app.ingest' first.") from e
     return _retriever
 
 

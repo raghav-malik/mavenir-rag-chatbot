@@ -1,6 +1,5 @@
 import os
 from docx import Document as DocxDocument
-from docx.enum.text import WD_ALIGN_PARAGRAPH
 from pypdf import PdfReader
 from sentence_transformers import SentenceTransformer
 import chromadb

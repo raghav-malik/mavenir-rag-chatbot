@@ -16,8 +16,8 @@ def call_openai(system_prompt: str, user_message: str) -> str:
         ],
         temperature=0.1
     )
-    return response.choices[0].message.content # type: ignore
-
+    content = response.choices[0].message.content # type: ignore
+    return content or ""
 
 def call_anthropic(system_prompt: str, user_message: str) -> str:
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
@@ -30,8 +30,8 @@ def call_anthropic(system_prompt: str, user_message: str) -> str:
         ],
         temperature=0.1
     )
-    return response.content[0].text # type: ignore
-
+    content = response.content[0].text # type: ignore
+    return content or ""
 
 def call_llm(system_prompt: str, user_message: str, provider: str = DEFAULT_LLM_PROVIDER) -> str:
     """
@@ -41,8 +41,12 @@ def call_llm(system_prompt: str, user_message: str, provider: str = DEFAULT_LLM_
     Same approach used at Airtap for multi-model orchestration.
     """
     if provider == "openai":
+        if not OPENAI_API_KEY:
+            raise ValueError("OPENAI_API_KEY not configured in .env")
         return call_openai(system_prompt, user_message)
     elif provider == "anthropic":
+        if not ANTHROPIC_API_KEY:
+            raise ValueError("ANTHROPIC_API_KEY not configured in .env")
         return call_anthropic(system_prompt, user_message)
     else:
         raise ValueError(f"Unsupported provider: {provider}. Use 'openai' or 'anthropic'.")
