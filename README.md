@@ -124,6 +124,8 @@ Tested two LLM providers with identical retrieval pipeline to evaluate model imp
 
 **Finding:** GPT-4.1-mini scored highest across all metrics. Claude Sonnet 4.5 was more cautious — it abstained on one answerable question (false negative), resulting in lower answer rate. Both achieved 100% abstention accuracy on adversarial queries.
 
+Metrics vary slightly between runs due to LLM non-determinism at temperature 0.1. Main results reflect the committed evaluation run. Model comparison reflects a separate comparative run.
+
 ### Retrieval Ablation: Dense-Only vs Hybrid
 
 | Query: "clause 5.4.4.1 AMF" | Dense Only | Hybrid (BM25 + RRF) |
@@ -136,7 +138,7 @@ Dense-only retrieval matched on the word "AMF" appearing frequently. Hybrid retr
 
 ### Comparison to Published Baselines
 
-TSpec-LLM (arXiv:2406.01768) reported that naive RAG improved GPT-4 accuracy from 51% to 72% on 3GPP question answering. Our system achieves 100% source accuracy and 100% abstention accuracy through hybrid retrieval, cross-encoder reranking, grounded prompting, and faithfulness verification.
+TSpec-LLM (arXiv:2406.01768) reported that naive RAG improved GPT-4 answer accuracy from 51% to 72% on 3GPP question answering. Our system optimizes for a different objective — faithful, abstention-aware answers rather than raw accuracy. We achieve 100% source accuracy (retrieval always finds the correct specification), 100% abstention accuracy (never hallucinated on out-of-scope queries), and verified faithfulness on answered queries. Direct accuracy comparison would require running against the TSpec-LLM evaluation dataset, which is noted as future work.
 
 ## Design Decisions
 
@@ -210,11 +212,14 @@ curl -X POST http://localhost:8000/ask \
 }
 ```
 
+Example response simplified for illustration.
+
 ## Project Structure
 
 ```
 mavenir-rag-chatbot/
 ├── app/
+│   ├── __init__.py          # Package marker
 │   ├── config.py            # All settings and design decisions
 │   ├── ingest.py            # PDF/DOCX → boundary chunking → embedding → ChromaDB
 │   ├── ingest_v2.py         # Clause-aware chunking with heading/breadcrumb metadata
@@ -277,6 +282,23 @@ uvicorn app.main:app --reload
 # Navigate to http://localhost:8000/docs
 ```
 
+### Docker Setup
+
+```bash
+# Configure API keys
+cp .env.example .env
+# Edit .env with your API keys
+
+# Build and run
+docker-compose up --build
+
+# The API will be available at http://localhost:8000
+# Swagger docs at http://localhost:8000/docs
+
+# To ingest documents, place 3GPP .docx files in data/ directory
+# then call POST /ingest via Swagger or curl
+```
+
 ### Run Evaluation
 
 ```bash
@@ -322,4 +344,4 @@ python -m app.evaluation
 
 ## Author
 
-Raghav Malik — B.Tech Computer Science, BML Munjal University
+Raghav Malik — B.Tech Computer Science, BML Munjal University. Former AI Engineering Intern at Airtap.ai (BlueStacks).
