@@ -7,31 +7,37 @@ from app.config import (
 
 
 def call_openai(system_prompt: str, user_message: str) -> str:
-    client = openai.OpenAI(api_key=OPENAI_API_KEY)
-    response = client.chat.completions.create(
-        model=OPENAI_MODEL,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message}
-        ],
-        temperature=0.1
-    )
-    content = response.choices[0].message.content # type: ignore
-    return content or ""
+    try:
+        client = openai.OpenAI(api_key=OPENAI_API_KEY)
+        response = client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message}
+            ],
+            temperature=0.1
+        )
+        content = response.choices[0].message.content # type: ignore
+        return content or ""
+    except openai.APIError as e:
+        raise RuntimeError(f"OpenAI API error: {e.message}") from e
 
 def call_anthropic(system_prompt: str, user_message: str) -> str:
-    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-    response = client.messages.create(
-        model=ANTHROPIC_MODEL,
-        max_tokens=2048,
-        system=system_prompt,
-        messages=[
-            {"role": "user", "content": user_message}
-        ],
-        temperature=0.1
-    )
-    content = response.content[0].text # type: ignore
-    return content or ""
+    try:
+        client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+        response = client.messages.create(
+            model=ANTHROPIC_MODEL,
+            max_tokens=2048,
+            system=system_prompt,
+            messages=[
+                {"role": "user", "content": user_message}
+            ],
+            temperature=0.1
+        )
+        content = response.content[0].text # type: ignore
+        return content or ""
+    except anthropic.APIError as e:
+        raise RuntimeError(f"Anthropic API error: {e.message}") from e
 
 def call_llm(system_prompt: str, user_message: str, provider: str = DEFAULT_LLM_PROVIDER) -> str:
     """
