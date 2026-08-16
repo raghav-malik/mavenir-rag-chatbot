@@ -86,8 +86,8 @@ User Question
 |---|---|---|
 | Source Accuracy | **100%** | Retrieval always found the correct specification |
 | Answer Rate | **100%** | System answered every answerable question |
-| Grounding Rate | **80%** | 8/10 answers included source citations |
-| Keyword Coverage | **68%** | Lexical overlap with expected terms |
+| Grounding Rate | **80-90%** | Answers included source citations |
+| Keyword Coverage | **74-76%** | Lexical overlap with expected terms |
 | Faithfulness | **1.0** | All verified claims supported by retrieved context |
 
 ### Adversarial Questions (8 unanswerable queries)
@@ -98,6 +98,20 @@ User Question
 | False Answers | **0/8** | Never hallucinated on out-of-scope queries |
 
 Adversarial queries tested: WiFi 7 bandwidth (not in 3GPP), vendor product comparisons, nonexistent Release 25, financial questions, general networking (TCP), code generation requests.
+
+### Chunking Ablation
+
+Tested five chunking configurations to find the optimal setting. OTel-Embedding-34M supports up to 1500 tokens, but Telco-RAG and Telco-oRAG research shows smaller focused chunks outperform larger ones for telecom retrieval.
+
+| Setting | Chunks | Source Acc | Grounding | Abstention | Keyword | Answer Rate |
+|---|---|---|---|---|---|---|
+| 512 chars, boundary | 12,505 | 100% | 80% | 100% | 68% | 100% |
+| **800 chars, boundary** | **8,024** | **100%** | **80-90%** | **100%** | **74-76%** | **100%** |
+| 1200 chars, boundary | 5,350 | 100% | 70% | 100% | 76% | 100% |
+| 1500 chars, boundary | 4,280 | 100% | 70% | 100% | 56% | 90% |
+| 800 chars, clause-aware | 9,054 | 100% | 80% | 100% | 68% | 100% |
+
+**Finding:** 800-character boundary chunking was optimal. Smaller chunks (512) lost context, larger chunks (1200/1500) reduced grounding rate and keyword coverage. At 1500 characters, the system even failed to answer one answerable question. Clause-aware chunking (parsing DOCX heading structure) did not outperform boundary chunking — the cross-encoder reranker compensates for imperfect boundaries by reading query and chunk together.
 
 ### Retrieval Ablation: Dense-Only vs Hybrid
 
@@ -118,15 +132,15 @@ TSpec-LLM (arXiv:2406.01768) reported that naive RAG improved GPT-4 accuracy fro
 | Decision | Choice | Why |
 |---|---|---|
 | **Framework** | None (raw Python) | Every component is explainable. Submission evaluates "understanding of solution design and code implementation." |
-| **Embedding Model** | OTel-Embedding-34M | Telecom-domain fine-tuned. +9.6 to +60.2 NDCG@10 over general-purpose models on telecom documents. 18M+ downloads on HuggingFace. |
+| **Embedding Model** | OTel-Embedding-34M | Telecom-domain fine-tuned. +9.6 to +60.2 NDCG@10 over general-purpose models on telecom documents. Supports up to 1500 tokens. 18M+ downloads on HuggingFace. |
 | **Retrieval** | Hybrid (BM25 + Semantic + RRF) | Chat3GPP (arXiv:2501.13954) showed hybrid outperforms either alone on 3GPP docs. 3GPP specs contain both conceptual content and exact identifiers — hybrid catches both. |
 | **Reranker** | cross-encoder/ms-marco-MiniLM-L6-v2 | Bi-encoders encode query and chunk separately. Cross-encoders read them together for higher accuracy. Two-phase approach from Chat3GPP. |
-| **Vector DB** | ChromaDB (persistent, local) | Runs locally with no account needed. Sufficient for project-scale corpus. Production alternative: Elasticsearch for native hybrid search. |
+| **Vector DB** | ChromaDB (persistent, local) | Runs locally with no account needed. Sufficient for project-scale corpus. Production alternative: pgvector or Qdrant for scale. |
 | **LLM Interface** | Adapter pattern (OpenAI + Anthropic) | Model-agnostic design. Swap providers via .env config. Same pattern used in production multi-model orchestration. |
 | **Hallucination Reduction** | Grounded prompt + citations + faithfulness verification | Research shows retrieval grounding reduces hallucinations by 75-90%. Citation enforcement adds traceability. LLM-as-judge catches "citation theater." |
 | **Evaluation** | Custom metrics + adversarial testing | Tests both accuracy (can it answer correctly?) and safety (does it refuse when it should?). Most RAG demos only test the happy path. |
 | **Query Expansion** | 3GPP glossary (60+ acronyms) | Telco-RAG's approach. Expands "AMF" to include "Access and Mobility Management Function" so retrieval catches both acronym and full-name mentions. |
-| **Chunk Size** | 512 characters (~100-150 tokens) | Telco-RAG found 125 tokens optimal. Telco-oRAG found 250 tokens optimal. Our size falls within the researched range. Future work: clause-aware chunking for better boundary handling. |
+| **Chunk Size** | 800 characters (~200 tokens) | Tested 5 configurations (512 to 1500 chars + clause-aware). 800 chars optimal — balances context retention vs precision. OTel model supports up to 1500 tokens but research shows smaller chunks outperform for telecom retrieval. |
 
 ## Knowledge Base
 
@@ -138,7 +152,7 @@ Three foundational 3GPP specifications covering the 5G stack:
 | **TS 23.502** | 5G System Procedures | Defines HOW things work: registration, authentication, handover |
 | **TS 38.300** | NR/NG-RAN Description | Defines the radio network: gNB, NR, radio access architecture |
 
-Total: 12,505 chunks indexed across all three specifications.
+Total: 8,024 chunks indexed across all three specifications (800-char boundary chunking).
 
 ## API Endpoints
 
@@ -171,6 +185,7 @@ curl -X POST http://localhost:8000/ask \
       "text_preview": "the realization of network slicing in the NG-RAN for NR connected to 5GC..."
     }
   ],
+  "model_provider": "openai",
   "faithfulness": {
     "faithfulness": 1.0,
     "is_faithful": true,
@@ -187,7 +202,8 @@ curl -X POST http://localhost:8000/ask \
 mavenir-rag-chatbot/
 ├── app/
 │   ├── config.py            # All settings and design decisions
-│   ├── ingest.py            # PDF/DOCX → chunking → embedding → ChromaDB
+│   ├── ingest.py            # PDF/DOCX → boundary chunking → embedding → ChromaDB
+│   ├── ingest_v2.py         # Clause-aware chunking with heading/breadcrumb metadata
 │   ├── retriever.py         # Hybrid search (BM25 + semantic + RRF) → rerank
 │   ├── generator.py         # Grounded prompt → LLM → confidence classification
 │   ├── llm_adapter.py       # Multi-model adapter (OpenAI + Anthropic)
@@ -233,6 +249,10 @@ pip install -r requirements.txt
 cp .env.example .env
 # Edit .env with your API keys
 
+# Download 3GPP specifications into data/ directory
+# Required: TS 23.501, TS 23.502, TS 38.300 (.docx format)
+# Source: https://www.3gpp.org/ftp/Specs/archive/
+
 # Ingest 3GPP documents
 python -m app.ingest
 
@@ -256,22 +276,21 @@ python -m app.evaluation
 | Chat3GPP (arXiv:2501.13954) | Hybrid retrieval + reranking for 3GPP | Adopted two-phase hybrid + cross-encoder approach |
 | Telco-RAG (arXiv:2404.15939) | Domain-specific RAG optimization | Adopted glossary-based query expansion |
 | TSpec-LLM (arXiv:2406.01768) | 3GPP evaluation baselines | Baseline comparison (GPT-4: 51% → 72% with naive RAG) |
-| RAGAS (arXiv:2309.15217) | RAG evaluation framework | Informed evaluation metric design |
 | OTel-Embedding (HuggingFace) | Telecom-specific embeddings | Selected as primary embedding model |
 
 ## Known Limitations and Future Work
 
 **Current limitations:**
-- Character-based chunking does not respect document structure (clause boundaries, tables). Clause-aware chunking would improve retrieval quality.
-- Faithfulness verification adds latency (second LLM call per query). A lighter verification approach or caching could reduce this.
-- Corpus limited to 3 specifications. Production deployment would need hundreds of specs with metadata-based pre-filtering.
+- Character-based boundary chunking does not respect document structure (clause boundaries, tables). Clause-aware chunking is implemented in `ingest_v2.py` with heading/breadcrumb metadata extraction, but did not outperform boundary chunking in evaluation — likely because the cross-encoder reranker compensates for imperfect boundaries.
+- Faithfulness verification adds latency (second LLM call per query). Production optimization: use a smaller/cheaper model for the judge, or run verification asynchronously.
+- Corpus limited to 3 specifications. Production deployment would need hundreds of specs with metadata-based pre-filtering by spec/release before retrieval.
 - No query routing for multi-spec questions that span architecture (23.501) and procedures (23.502).
+- Evaluation uses 10 answerable + 8 adversarial questions — sufficient for directional signal but not statistical confidence. Production eval set should have 50+ questions with clause-level ground truth.
 
 **Future enhancements:**
-- Section/clause-aware chunking with hierarchical metadata (spec, clause, title)
 - Metadata-filtered retrieval to scope search by specification when mentioned in query
 - Reranker score threshold for pre-generation abstention
-- RAGAS evaluation integration for automated faithfulness scoring at scale
+- Two-stage faithfulness verification (separate claim extraction and NLI verification)
 - Streaming responses for better user experience
 - Telco-RAG-style neural document router for multi-series retrieval
 - Extension to TS 23.503 (policy), TS 29-series (APIs), TS 32-series (management)
@@ -281,7 +300,7 @@ python -m app.evaluation
 - **Language:** Python 3.10+
 - **API Framework:** FastAPI
 - **Vector Database:** ChromaDB (persistent, local)
-- **Embeddings:** OTel-Embedding-34M (telecom-domain fine-tuned)
+- **Embeddings:** OTel-Embedding-34M (telecom-domain fine-tuned, 1500 token max)
 - **Reranker:** cross-encoder/ms-marco-MiniLM-L6-v2
 - **Keyword Search:** rank-bm25 (BM25Okapi)
 - **LLM Providers:** OpenAI (GPT-4o-mini) / Anthropic (Claude Sonnet)
