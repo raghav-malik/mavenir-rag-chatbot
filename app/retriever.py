@@ -131,6 +131,7 @@ class HybridRetriever:
         Stage 2: Cross-encoder reranking.
         Reads query and chunk TOGETHER for precise relevance scoring.
         """
+        chunks = [dict(c) for c in chunks]
         pairs = [(query, chunk["text"]) for chunk in chunks]
         scores = reranker.predict(pairs)
         
