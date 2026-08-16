@@ -41,22 +41,32 @@ def build_user_message(query: str, context: str) -> str:
 
 ---
 
-Question: {query}
+<user_question>{query}</user_question>
 
-Answer the question using ONLY the context above. Cite sources using [Source N] format."""
+Answer the question inside <user_question> tags using ONLY the context above. Cite sources using [Source N] format."""
 
 
 def classify_confidence(response: str, chunks: list[dict]) -> str:
-    """
-    Classify whether the response was grounded in context or not.
+    response_lower = response.lower()
     
-    Simple heuristic: if the response contains our "insufficient info"
-    phrase, it's NOT_GROUNDED. Otherwise, check if source citations exist.
-    """
-    if "don't have enough information" in response.lower():
+    abstention_phrases = [
+        "don't have enough information",
+        "do not have enough information",
+        "cannot answer",
+        "no information available",
+        "not covered in",
+        "insufficient information",
+        "not mentioned in",
+        "no relevant information",
+        "unable to find",
+        "not present in the provided",
+        "not addressed in",
+    ]
+    
+    if any(phrase in response_lower for phrase in abstention_phrases):
         return "NOT_GROUNDED"
     
-    has_citations = any(f"[Source {i}" in response for i in range(1, len(chunks) + 1))
+    has_citations = any(f"[source {i}" in response_lower for i in range(1, len(chunks) + 1))
     
     if has_citations:
         return "GROUNDED_WITH_CITATIONS"
