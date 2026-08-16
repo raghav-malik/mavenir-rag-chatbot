@@ -160,6 +160,8 @@ Total: 8,024 chunks indexed across all three specifications (800-char boundary c
 |---|---|---|
 | `POST` | `/ask` | Ask a question about 3GPP standards |
 | `POST` | `/ingest` | Ingest documents from the data directory |
+| `GET` | `/health` | System health: ChromaDB status, providers, BM25 index |
+| `GET` | `/history` | Last 50 queries with confidence and latency |
 | `GET` | `/sources` | List ingested documents |
 
 ### Example Request
@@ -186,6 +188,7 @@ curl -X POST http://localhost:8000/ask \
     }
   ],
   "model_provider": "openai",
+  "latency_ms": 1250,
   "faithfulness": {
     "faithfulness": 1.0,
     "is_faithful": true,
@@ -303,7 +306,7 @@ python -m app.evaluation
 - **Embeddings:** OTel-Embedding-34M (telecom-domain fine-tuned, 1500 token max)
 - **Reranker:** cross-encoder/ms-marco-MiniLM-L6-v2
 - **Keyword Search:** rank-bm25 (BM25Okapi)
-- **LLM Providers:** OpenAI (GPT-4o-mini) / Anthropic (Claude Sonnet)
+- **LLM Providers:** OpenAI (GPT-4.1-mini) / Anthropic (Claude Sonnet 4.5)
 - **Document Parsing:** pypdf, python-docx
 
 ## Author
