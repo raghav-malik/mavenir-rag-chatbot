@@ -1,7 +1,7 @@
 import json
 import re
+from typing import Optional
 from app.llm_adapter import call_llm
-from app.config import FAITHFULNESS_MODEL
 
 
 FAITHFULNESS_PROMPT = """You are a strict fact checker. Your job is to verify whether 
@@ -36,7 +36,7 @@ def extract_json(text: str) -> dict:
     return {"claims": [], "faithfulness": 0.0}
 
 
-def verify_faithfulness(answer: str, chunks: list[dict], provider: str = None) -> dict: # type: ignore
+def verify_faithfulness(answer: str, chunks: list[dict], provider: Optional[str] = None) -> dict:
     """
     Post-generation faithfulness check.
     
@@ -60,10 +60,6 @@ def verify_faithfulness(answer: str, chunks: list[dict], provider: str = None) -
     
     # Ask LLM to verify
     prompt = FAITHFULNESS_PROMPT.format(context=context, answer=answer)
-    
-    kwargs = {}
-    if provider:
-        kwargs["provider"] = provider
     
     raw_response = call_llm(
         "You are a JSON-only fact checker. Return only valid JSON.", 

@@ -1,6 +1,8 @@
 from app.retriever import retrieve
 from app.llm_adapter import call_llm
 from app.faithfulness import verify_faithfulness
+from typing import Optional
+from app.config import DEFAULT_LLM_PROVIDER
 
 
 SYSTEM_PROMPT = """You are a 3GPP telecommunications standards expert assistant.
@@ -74,7 +76,7 @@ def classify_confidence(response: str, chunks: list[dict]) -> str:
         return "GROUNDED_NO_CITATIONS"
 
 
-def generate(query: str, provider: str = None) -> dict: # type: ignore
+def generate(query: str, provider: Optional[str] = None) -> dict:
     """
     Full RAG generation pipeline with faithfulness verification:
     1. Retrieve top 5 relevant chunks
@@ -96,6 +98,7 @@ def generate(query: str, provider: str = None) -> dict: # type: ignore
     if provider:
         kwargs["provider"] = provider
     response = call_llm(SYSTEM_PROMPT, user_message, **kwargs)
+    response = response.replace("<user_question>", "").replace("</user_question>", "").strip()
     
     # Step 4: Classify confidence
     confidence = classify_confidence(response, chunks)
@@ -125,7 +128,7 @@ def generate(query: str, provider: str = None) -> dict: # type: ignore
         "answer": response,
         "confidence": confidence,
         "sources": sources,
-        "model_provider": provider or "default"
+        "model_provider": provider or DEFAULT_LLM_PROVIDER
     }
     
     if faithfulness_result:

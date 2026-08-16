@@ -1,9 +1,10 @@
 import json
 import re
 import os
+from typing import Optional
 
 
-def load_glossary(path: str = None) -> dict: # type: ignore
+def load_glossary(path: Optional[str] = None) -> dict: 
     if path is None:
         path = os.path.join(os.path.dirname(__file__), "glossary.json")
     with open(path, "r") as f:
@@ -13,7 +14,7 @@ def load_glossary(path: str = None) -> dict: # type: ignore
 GLOSSARY = load_glossary()
 
 
-def expand_query(query: str, glossary: dict = None) -> str: # type: ignore
+def expand_query(query: str, glossary: Optional[dict] = None) -> str:
     """
     Expand telecom acronyms in the query to improve retrieval.
     
